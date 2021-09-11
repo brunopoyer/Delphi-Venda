@@ -12,7 +12,7 @@ object VendaModelConexao: TVendaModelConexao
     Top = 64
   end
   object FDPhysMySQLDriverLink1: TFDPhysMySQLDriverLink
-    VendorLib = 'C:\Projetos\delphi-venda\libmysql.dll'
+    VendorLib = 'C:\Projetos\delphi-venda\Delphi-Venda\libmysql.dll'
     Left = 112
     Top = 136
   end

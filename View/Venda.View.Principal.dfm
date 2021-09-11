@@ -12,6 +12,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
+  OnActivate = FormActivate
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
@@ -23,7 +24,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
     Color = clWindow
     ParentBackground = False
     TabOrder = 0
-    ExplicitWidth = 879
     object PageControl1: TPageControl
       Left = 1
       Top = 1
@@ -32,7 +32,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
       ActivePage = TabSheet2
       Align = alClient
       TabOrder = 0
-      ExplicitWidth = 877
+      OnChange = PageControl1Change
       object TabSheet1: TTabSheet
         Caption = '     Consultar Pedidos      '
         object Panel2: TPanel
@@ -42,7 +42,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
           Height = 579
           Align = alClient
           TabOrder = 0
-          ExplicitWidth = 869
           object Panel5: TPanel
             Left = 1
             Top = 1
@@ -57,8 +56,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
             Font.Style = [fsBold]
             ParentFont = False
             TabOrder = 0
-            ExplicitTop = 97
-            ExplicitWidth = 867
           end
           object DBGrid1: TDBGrid
             Left = 1
@@ -67,6 +64,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
             Height = 183
             Align = alTop
             DataSource = VendaModelDados.DsPedidos
+            ReadOnly = True
             TabOrder = 1
             TitleFont.Charset = DEFAULT_CHARSET
             TitleFont.Color = clWindowText
@@ -97,16 +95,19 @@ object VendaViewPrincipal: TVendaViewPrincipal
               item
                 Expanded = False
                 FieldName = 'NOME_CLIENTE'
+                Width = 64
                 Visible = True
               end
               item
                 Expanded = False
                 FieldName = 'CIDADE'
+                Width = 64
                 Visible = True
               end
               item
                 Expanded = False
                 FieldName = 'UF'
+                Width = 64
                 Visible = True
               end>
           end
@@ -117,9 +118,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
             Height = 353
             Align = alClient
             TabOrder = 2
-            ExplicitTop = 321
-            ExplicitWidth = 867
-            ExplicitHeight = 257
             object Panel7: TPanel
               Left = 1
               Top = 1
@@ -134,7 +132,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
               Font.Style = [fsBold]
               ParentFont = False
               TabOrder = 0
-              ExplicitWidth = 865
             end
             object DBGrid2: TDBGrid
               Left = 1
@@ -143,6 +140,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
               Height = 310
               Align = alClient
               DataSource = VendaModelDados.DsItensPedidos
+              ReadOnly = True
               TabOrder = 1
               TitleFont.Charset = DEFAULT_CHARSET
               TitleFont.Color = clWindowText
@@ -183,6 +181,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
                 item
                   Expanded = False
                   FieldName = 'NOME_PRODUTO'
+                  Width = 64
                   Visible = True
                 end>
             end
@@ -199,7 +198,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
           Height = 579
           Align = alClient
           TabOrder = 0
-          ExplicitWidth = 869
           object Panel8: TPanel
             Left = 1
             Top = 223
@@ -208,7 +206,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
             Align = alBottom
             BevelInner = bvLowered
             TabOrder = 0
-            ExplicitWidth = 867
             object DBGrid3: TDBGrid
               Left = 2
               Top = 2
@@ -222,6 +219,7 @@ object VendaViewPrincipal: TVendaViewPrincipal
               TitleFont.Height = -11
               TitleFont.Name = 'Tahoma'
               TitleFont.Style = []
+              OnKeyDown = DBGrid3KeyDown
               OnKeyPress = DBGrid3KeyPress
               Columns = <
                 item
@@ -275,7 +273,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
             Height = 222
             Align = alClient
             TabOrder = 1
-            ExplicitWidth = 867
             object Panel10: TPanel
               Left = 1
               Top = 87
@@ -284,8 +281,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
               Align = alBottom
               BevelInner = bvLowered
               TabOrder = 1
-              ExplicitLeft = 0
-              ExplicitTop = 84
               object Label1: TLabel
                 Left = 3
                 Top = 29
@@ -347,7 +342,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
                 ButtonHeight = 39
                 Caption = 'ToolBar1'
                 TabOrder = 5
-                ExplicitWidth = 861
                 object BitBtn2: TBitBtn
                   Left = 0
                   Top = 0
@@ -410,9 +404,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
               Height = 86
               Align = alClient
               TabOrder = 0
-              ExplicitLeft = 0
-              ExplicitTop = 6
-              ExplicitWidth = 865
               object Label8: TLabel
                 Left = 75
                 Top = 23
@@ -525,7 +516,6 @@ object VendaViewPrincipal: TVendaViewPrincipal
             ButtonHeight = 41
             Caption = 'ToolBar1'
             TabOrder = 2
-            ExplicitWidth = 867
             object BitBtn5: TBitBtn
               Left = 0
               Top = 0

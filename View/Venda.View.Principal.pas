@@ -1,3 +1,9 @@
+{
+ Projeto desenvolvido por Bruno Fernandes Além Poyer
+ para concorrer ao processo seletivo da empresa WJ Technology
+ E-mail: bruno.319@outlook.com.br
+}
+
 unit Venda.View.Principal;
 
 interface
@@ -59,11 +65,19 @@ type
     procedure EdCodProdutoExit(Sender: TObject);
     procedure EdQuantidadeExit(Sender: TObject);
     procedure EdValorUnitExit(Sender: TObject);
-    procedure DBGrid3KeyPress(Sender: TObject; var Key: Char);
     procedure BitBtn5Click(Sender: TObject);
     procedure BitBtn4Click(Sender: TObject);
     procedure BitBtn3Click(Sender: TObject);
     procedure BitBtn6Click(Sender: TObject);
+    procedure HabCampos();
+    procedure DesCampos();
+    procedure LimpaTela();
+    procedure FormActivate(Sender: TObject);
+    procedure DBGrid3KeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure DBGrid3KeyPress(Sender: TObject; var Key: Char);
+    procedure PageControl1Change(Sender: TObject);
+
   private
     { Private declarations }
   public
@@ -72,6 +86,7 @@ type
 
 var
   VendaViewPrincipal: TVendaViewPrincipal;
+  SeqItem :Integer;
 
 implementation
 
@@ -81,12 +96,23 @@ uses
 {$R *.dfm}
 
 procedure TVendaViewPrincipal.BitBtn1Click(Sender: TObject);
+var
+  Pedido :Integer;
 begin
   if (EdPedido.Text = '0') then
     begin
       raise Exception.Create('Não foi inserido nenhum item');
     end;
-  TControllerPedidoVenda.New.SalvarPedido(StrToInt(EdPedido.Text));
+  Pedido := TControllerPedidoVenda.New.SalvarPedido(StrToInt(EdPedido.Text));
+  if Pedido = 0 then
+  begin
+    ShowMessage('Erro ao salvar pedido, verifique!');
+  end else begin
+    ShowMessage('Pedido salvo com sucesso!');
+    EdPedido.Text := IntToStr(Pedido);
+    TControllerPedidoVenda.New.PesquisarPedido(Pedido);
+  end;
+  DesCampos;
 end;
 
 procedure TVendaViewPrincipal.BitBtn2Click(Sender: TObject);
@@ -116,7 +142,14 @@ begin
     end;
   if (EdPedido.Text = '0') then
     EdPedido.Text := IntToStr(TControllerPedidoVenda.New.CriarIdPedidoTemp);
-  TControllerPedidoVenda.New.CriarPedidoTemp(StrToInt(EdPedido.Text), StrToInt(EdCodCliente.Text),  StrToInt(EdCodProduto.Text), StrToFloat(EdQuantidade.Text), StrToFloat(EdValorUnit.Text));
+  if EdCodProduto.Enabled = False then
+     begin
+       TControllerPedidoVenda.New.EditarProdutoTemp(StrToInt(EdPedido.Text), SeqItem, StrToFloat(EdQuantidade.Text), StrToFloat(EdValorUnit.Text));
+       SeqItem := 0;
+       EdCodProduto.Enabled := True;
+     end else begin
+       TControllerPedidoVenda.New.CriarPedidoTemp(StrToInt(EdPedido.Text), StrToInt(EdCodCliente.Text),  StrToInt(EdCodProduto.Text), StrToFloat(EdQuantidade.Text), StrToFloat(EdValorUnit.Text));
+     end;
   EdCodProduto.Clear;
   EdNomeProduto.Clear;
   EdQuantidade.Clear;
@@ -141,8 +174,12 @@ begin
    if VendaModelDados.QueryConsulta.RecordCount = 0 then
    begin
       ShowMessage('Pedido não encontrado');
+      EdPedido.Text := '0';
+      EdCodCliente.Clear;
+      EdNomeCliente.Clear;
+      EdCidadeCliente.Clear;
+      EdUFCliente.Clear;
    end else begin
-      HabCampos();
       EdPedido.Text := VendaModelDados.QueryConsulta.FieldByName('NUM_PED').AsString;
       EdCodCliente.Text := VendaModelDados.QueryConsulta.FieldByName('ID_CLIENTE').AsString;
       EdNomeCliente.Text := VendaModelDados.QueryConsulta.FieldByName('NOME_CLIENTE').AsString;
@@ -151,32 +188,80 @@ begin
    end;
 end;
 
-procedure HabCampos();
+procedure TVendaViewPrincipal.HabCampos();
 begin
+  //Habilita campos e botoes para inserção de dados
   EdCodCliente.Enabled := True;
   EdCodProduto.Enabled := True;
   EdQuantidade.Enabled := True;
   EdValorUnit.Enabled := True;
+  BitBtn1.Enabled := True;
+  BitBtn4.Enabled := True;
+  BitBtn5.Enabled := False;
+  BitBtn3.Enabled := False;
+  BitBtn6.Enabled := False;
+  DBGrid3.Enabled := True;
 end;
 
-procedure DesCampos();
+procedure TVendaViewPrincipal.DBGrid3KeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
 begin
+  if (Key = vk_delete) then
+    if MessageDlg('Deseja excluir o item selecionado ?',mtConfirmation,
+          [mbYes, mbNo], 0) = mrYes then
+    begin
+      TControllerPedidoVenda.New.DeletarProdutoTemp(StrToInt(EdPedido.Text), VendaModelDados.QItensPedidosTemp.FieldByName('SEQ_ITEM').AsInteger);
+      TControllerPedidoVenda.New.ConsultarItens(StrToInt(EdPedido.Text));
+      ShowMessage('Item Excluído com sucesso');
+    end;
+end;
+
+procedure TVendaViewPrincipal.DBGrid3KeyPress(Sender: TObject; var Key: Char);
+begin
+  if (Key = #13) then
+    if MessageDlg('Deseja Corrigir o item selecionado ?',mtConfirmation,
+          [mbYes, mbNo], 0) = mrYes then
+    begin
+      EdCodProduto.Text := VendaModelDados.QItensPedidosTemp.FieldByName('ID_PRODUTO').AsString;
+      EdNomeProduto.Text := VendaModelDados.QItensPedidosTemp.FieldByName('NOME_PRODUTO').AsString;
+      EdQuantidade.Text := VendaModelDados.QItensPedidosTemp.FieldByName('QTDE_ITEM').AsString;
+      EdValorUnit.Text := VendaModelDados.QItensPedidosTemp.FieldByName('VALOR_UNIT').AsString;
+      EdSubTotal.Text := VendaModelDados.QItensPedidosTemp.FieldByName('VALOR_TOTAL').AsString;
+      SeqItem := VendaModelDados.QItensPedidosTemp.FieldByName('SEQ_ITEM').AsInteger;
+      EdCodProduto.Enabled := False;
+    end;
+end;
+
+procedure TVendaViewPrincipal.DesCampos();
+begin
+  //Habilita campos e botoes para visualização de dados
   EdCodCliente.Enabled := False;
   EdCodProduto.Enabled := False;
   EdQuantidade.Enabled := False;
   EdValorUnit.Enabled := False;
+  BitBtn1.Enabled := False;
+  BitBtn4.Enabled := False;
+  BitBtn5.Enabled := True;
+  BitBtn3.Enabled := True;
+  BitBtn6.Enabled := True;
+  DBGrid3.Enabled := False;
 end;
 
 procedure TVendaViewPrincipal.BitBtn4Click(Sender: TObject);
 begin
   TControllerPedidoVenda.New.CancelarPedido(StrToInt(EdPedido.Text));
+  TControllerPedidoVenda.New.ConsultarItens(StrToInt(EdPedido.Text));
+  LimpaTela();
+  DesCampos;
 end;
 
 procedure TVendaViewPrincipal.BitBtn5Click(Sender: TObject);
 begin
+  //Habilita tela para inserção dos dados do pedido
   EdCodCliente.Enabled := True;
   EdCodCliente.SetFocus;
-  EdPedido.Text := '0';
+  LimpaTela();
+  HabCampos;
 end;
 
 procedure TVendaViewPrincipal.BitBtn6Click(Sender: TObject);
@@ -187,30 +272,42 @@ begin
    ClickedOK := InputQuery('Pedidos de Venda','Digite o Codigo do Pedido', Pedido);
    If (ClickedOK = True) then
      begin
-        if MessageDlg('Deseja excluir o pedido ?',mtConfirmation,
-            [mbYes, mbNo], 0) = mrYes then
-           TControllerPedidoVenda.New.DeletarPedido(StrToInt(Pedido));
+        if (Length(Trim(Pedido)) <> 0) then
+          begin
+            if MessageDlg('Deseja excluir o pedido ' + Pedido + ' ?',mtConfirmation,
+                [mbYes, mbNo], 0) = mrYes then
+               ShowMessage(TControllerPedidoVenda.New.DeletarPedido(StrToInt(Pedido)));
+               VendaModelDados.Qitenspedidostemp.Close;
+               VendaModelDados.Qitenspedidostemp.Open;
+               LimpaTela;
+          end;
      end;
 end;
 
-procedure TVendaViewPrincipal.DBGrid3KeyPress(Sender: TObject; var Key: Char);
+procedure TVendaViewPrincipal.LimpaTela();
 begin
-  If (Key = #13) then
-    begin
-      TControllerPedidoVenda.New.EditarProdutoTemp(StrToInt(EdPedido.Text), VendaModelDados.QItensPedidosTemp.FieldByName('SEQ_ITEM').AsInteger, StrToFloat(EdQuantidade.Text),StrToFloat(EdValorUnit.Text));
-      TControllerPedidoVenda.New.ConsultarItens(StrToInt(EdPedido.Text));
-      EdCodProduto.Enabled := False;
-      EdQuantidade.SetFocus;
-    end;
-  if (Key = #46) then
-    if MessageDlg('Deseja excluir o item selecionado ?',mtConfirmation,
-          [mbYes, mbNo], 0) = mrYes then
-    begin
-      TControllerPedidoVenda.New.DeletarProdutoTemp(StrToInt(EdPedido.Text), VendaModelDados.QItensPedidosTemp.FieldByName('SEQ_ITEM').AsInteger);
-      TControllerPedidoVenda.New.ConsultarItens(StrToInt(EdPedido.Text));
-      ShowMessage('Item Excluído com sucesso');
-    end;
+     //Zera os campos da tela para inserção de novo pedido
+     EdPedido.TExt := '0';
+     EdCodCliente.Clear;
+     EdNomeCliente.Clear;
+     EdCidadeCliente.Clear;
+     EdUfCliente.Clear;
+     EdCodProduto.Clear;
+     EdNomeProduto.Clear;
+     EdValorUnit.Clear;
+     EdQuantidade.Clear;
+     EdSubTotal.Clear;
+end;
 
+procedure TVendaViewPrincipal.PageControl1Change(Sender: TObject);
+begin
+  if PageControl1.ActivePageIndex = TabSheet1.TabIndex then
+    begin
+      VendaModelDados.QPedidos.Close;
+      VendaModelDados.QPedidos.Open;
+      VendaModelDados.QItensPedidos.Close;
+      VendaModelDados.QItensPedidos.Open;
+    end;
 end;
 
 procedure TVendaViewPrincipal.EdCodClienteExit(Sender: TObject);
@@ -218,13 +315,14 @@ begin
   if Length(Trim(EdCodCliente.Text)) <> 0 then
     begin
       TControllerPedidoVenda.New.ValidarCliente(StrToInt(EdCodCliente.Text));
-      if VendaModelDados.QClientes.RecordCount = 0 then
+       if VendaModelDados.QClientes.RecordCount = 0 then
         begin
           ShowMessage('Cliente não encontrado, verifique');
           EdCodCliente.Clear;
           EdNomeCliente.Clear;
           EdCidadeCliente.Clear;
           EdUfCliente.Clear;
+          EdCodCliente.SetFocus;
         end else begin
           EdNomeCliente.Text := VendaModelDados.QClientes.FieldByName('NOME_CLIENTE').AsString;
           EdCidadeCliente.Text := VendaModelDados.QClientes.FieldByName('CIDADE').AsString;
@@ -238,7 +336,7 @@ begin
   if Length(Trim(EdCodProduto.Text)) <> 0 then
     begin
       TControllerPedidoVenda.New.ValidarProduto(StrToInt(EdCodProduto.Text));
-      if VendaModelDados.QClientes.RecordCount = 0 then
+      if VendaModelDados.QProdutos.RecordCount = 0 then
         begin
           ShowMessage('Produto não encontrado, verifique');
           EdCodProduto.Clear;
@@ -246,9 +344,11 @@ begin
           EdValorUnit.Clear;
           EdQuantidade.Clear;
           EdSubTotal.Clear;
+          EdCodProduto.SetFocus;
         end else begin
           EdNomeProduto.Text := VendaModelDados.QProdutos.FieldByName('nome_produto').AsString;
           EdValorUnit.Text := VendaModelDados.QProdutos.FieldByName('preco_venda').AsString;
+          EdQuantidade.Text := '1';
         end;
     end;
 end;
@@ -273,6 +373,14 @@ begin
 
         EdSubTotal.Text := FormatFloat('###,###,###,##0.00', (StrToFloat(EdValorUnit.Text) * StrToFloat(EdQuantidade.Text)));
     end;
+end;
+
+procedure TVendaViewPrincipal.FormActivate(Sender: TObject);
+begin
+  DesCampos();
+  VendaModelDados.QPedidos.Open;
+  VendaModelDados.QItensPedidos.Open;
+
 end;
 
 end.

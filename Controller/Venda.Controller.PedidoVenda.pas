@@ -13,11 +13,11 @@ uses
        destructor Destroy; override;
        class function New : iPedidoVenda;
        function CriarPedidoTemp(Id, CodigoCliente, CodigoProduto :Integer; ValorUnit, Quantidade :Real) : iPedidoVenda;
-       function SalvarPedido(ID:Integer) : iPedidoVenda;
+       function SalvarPedido(ID:Integer) : Integer;
        function ValidarPedido : iPedidoVenda;
        function CriarIdPedidoTemp : Integer;
        function CancelarPedido(Pedido :Integer) : iPedidoVenda;
-       function DeletarPedido(Pedido :Integer) : iPedidoVenda;
+       function DeletarPedido(Pedido :Integer) : String;
        function PesquisarPedido(Pedido :Integer) : iPedidoVenda;
        procedure ValidarCliente(CodCliente :Integer);
        function ConsultarItens(ID :Integer) :Real;
@@ -176,7 +176,7 @@ begin
     end;
 end;
 
-function TControllerPedidoVenda.SalvarPedido(ID :Integer) : iPedidoVenda;
+function TControllerPedidoVenda.SalvarPedido(ID :Integer) : Integer;
 Var
   NumPed :Integer;
 begin
@@ -192,7 +192,7 @@ begin
     end;
   if VendaModelDados.QueryConsulta.RecordCount = 0 then
     begin
-
+       Result := 0;
     end else begin
       With VendaModelDados.QueryTransition do
         begin
@@ -231,7 +231,7 @@ begin
             begin
               Close;
               Sql.Clear;
-              Sql.Add('INSERT INTO ITENS_PEDIDO (SEQ_ITEM, NUM_PED, ID_PRODUTO, QTDE_ITEM, VALOR_UNIT, VALOR_TOTAL)');
+              Sql.Add('INSERT INTO ITENS_PEDIDOS (SEQ_ITEM, NUM_PED, ID_PRODUTO, QTDE_ITEM, VALOR_UNIT, VALOR_TOTAL)');
               Sql.Add('VALUES (:SEQ_ITEM, :NUM_PED, :ID_PRODUTO, :QTDE_ITEM, :VALOR_UNIT, :VALOR_TOTAL)');
               ParamByName('SEQ_ITEM').AsInteger := VendaModelDados.QueryConsulta.FieldByName('SEQ_ITEM').AsInteger;
               ParamByName('NUM_PED').AsInteger := NumPed;
@@ -252,13 +252,45 @@ begin
           ParamByName('ID').AsInteger := ID;
           ExecSql;
         end;
-
+        Result := NumPed;
     end;
 end;
 
-function TControllerPedidoVenda.DeletarPedido(Pedido :Integer): iPedidoVenda;
+function TControllerPedidoVenda.DeletarPedido(Pedido :Integer): String;
 begin
-  Result := Self;
+  With VendaModelDados.QueryConsulta do
+    begin
+      Close;
+      Sql.Clear;
+      Sql.Add('SELECT * FROM PEDIDOS');
+      Sql.Add('WHERE NUM_PED=:NUM_PED');
+      ParamByName('NUM_PED').AsInteger := Pedido;
+      Open;
+    end;
+  if VendaModelDados.QueryConsulta.RecordCount = 0 then
+    begin
+      Result := 'Pedido não foi encontrado';
+    end else begin
+      With VendaModelDados.QueryTransition do
+        begin
+          Close;
+          Sql.Clear;
+          Sql.Add('DELETE FROM ITENS_PEDIDOS');
+          Sql.Add('WHERE NUM_PED=:NUM_PED');
+          ParamByName('NUM_PED').AsInteger := Pedido;
+          ExecSql;
+        end;
+      With VendaModelDados.QueryTransition do
+        begin
+          Close;
+          Sql.Clear;
+          Sql.Add('DELETE FROM PEDIDOS');
+          Sql.Add('WHERE NUM_PED=:NUM_PED');
+          ParamByName('NUM_PED').AsInteger := Pedido;
+          ExecSql;
+        end;
+      Result := 'Pedido excluído com sucesso!';
+    end;
 end;
 
 destructor TControllerPedidoVenda.Destroy;
@@ -269,6 +301,17 @@ end;
 
 function TControllerPedidoVenda.CancelarPedido(Pedido :Integer): iPedidoVenda;
 begin
+  With VendaModelDados.QueryTransition do
+    begin
+      Close;
+      Sql.Clear;
+      Sql.Add('DELETE FROM PEDIDOS_TEMP');
+      Sql.Add('WHERE ID =:ID');
+      ParamByName('ID').AsInteger := Pedido;
+      ExecSql;
+    end;
+  VendaModelDados.QItensPedidosTemp.Close;
+  VendaModelDados.QItensPedidosTemp.Open;
   Result := Self;
 end;
 
@@ -288,7 +331,7 @@ begin
           Sql.Add('FROM PEDIDOS P');
           Sql.Add('INNER JOIN CLIENTES C');
           Sql.Add('ON C.ID = P.ID_CLIENTE');
-          Sql.Add('WHERE NUM_PED=:ID');
+          Sql.Add('WHERE P.NUM_PED=:ID');
           ParamByName('ID').AsInteger := Pedido;
           Open;
         end;
@@ -303,7 +346,7 @@ begin
           Sql.Add('ON P.NUM_PED = I.NUM_PED');
           Sql.Add('INNER JOIN PRODUTOS R');
           Sql.Add('ON I.ID_PRODUTO = R.ID');
-          Sql.Add('WHERE NUM_PED =:ID');
+          Sql.Add('WHERE P.NUM_PED =:ID');
           ParamByName('ID').AsInteger := Pedido;
           Open;
         end;

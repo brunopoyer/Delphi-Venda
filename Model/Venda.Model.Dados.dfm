@@ -145,6 +145,7 @@ object VendaModelDados: TVendaModelDados
   end
   object QItensPedidos: TFDQuery
     MasterSource = DsPedidos
+    MasterFields = 'NUM_PED'
     Connection = VendaModelConexao.FDConnection1
     SQL.Strings = (
       
@@ -156,13 +157,15 @@ object VendaModelDados: TVendaModelDados
       'ON P.NUM_PED = I.NUM_PED'
       'INNER JOIN PRODUTOS R'
       'ON I.ID_PRODUTO = R.ID'
-      'WHERE NUM_PED =:ID')
+      'WHERE P.NUM_PED =:NUM_PED')
     Left = 568
     Top = 180
     ParamData = <
       item
-        Name = 'ID'
+        Name = 'NUM_PED'
+        DataType = ftAutoInc
         ParamType = ptInput
+        Value = Null
       end>
     object QItensPedidosSEQ_ITEM: TFDAutoIncField
       DisplayLabel = 'ID Item'
@@ -243,7 +246,7 @@ object VendaModelDados: TVendaModelDados
       'FROM PEDIDOS_TEMP I'
       'INNER JOIN PRODUTOS R'
       'ON I.ID_PRODUTO = R.ID'
-      'WHERE ID =:ID')
+      'WHERE I.ID =:ID')
     Left = 568
     Top = 44
     ParamData = <
